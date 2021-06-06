@@ -6,9 +6,11 @@
         xmlns:local="clr-namespace:PlantsVsZombiesStudio"
         mc:Ignorable="d"
         FontFamily="Microsoft YaHei UI"
+        Closing="Window_Closing"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         WindowStartupLocation="CenterScreen"
 	    Title="Plants Vs. Zombies Studio"
+        Loaded="Window_Loaded"
 	    Height="720"
 	    Width="1280">
     <FrameworkElement.Resources>
@@ -52,18 +54,22 @@
                         <StackPanel
 							Width="Auto"
 							HorizontalAlignment="Left">
-                            <materialDesign:DialogHost
-								Name="DialogHostButtoFindGame"
-								HorizontalAlignment="Left"
-								Margin="16">
+                            <StackPanel Orientation="Horizontal">
                                 <Button
 									Style="{StaticResource MaterialDesignFlatButton}"
 									Background="#bdbdbd"
 									Content="FIND GAME"
 									Width="111"
 									Height="32"
-									Click="Button_Click" />
-                            </materialDesign:DialogHost>
+									Click="Button_Click" Margin="16"/>
+                                <Button
+									Style="{StaticResource MaterialDesignFlatButton}"
+									Background="#bdbdbd"
+									Content="RELOAD WINDOW"
+									Width="Auto"
+									Height="32"
+									Click="Button_Click_3" Margin="16"/>
+                            </StackPanel>
                             <GroupBox
 								Margin="16"
 								Width="Auto"
@@ -178,12 +184,13 @@
 							HorizontalAlignment="Center"
 							VerticalAlignment="Top"
 							Height="Auto"
-							Margin="16,16,16,16" />
+							Margin="16"/>
                     </materialDesign:Card>
-                    <TextBlock
+                    <ScrollViewer Margin="16" Height="Auto">
+                        <TextBlock
 						Name="TextNoticeInformation"
-						Text="Information"
-						Margin="16" />
+						Text="Information"/>
+                    </ScrollViewer>
                 </StackPanel>
                 <StackPanel
 					VerticalAlignment="Bottom"

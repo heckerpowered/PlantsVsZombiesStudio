@@ -10,9 +10,14 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using MaterialDesignThemes.Wpf;
+using MaterialDesignColors;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Jvav.Syntax;
+using Jvav.Binding;
+using System;
 
 namespace PlantsVsZombiesStudio
 {
@@ -29,22 +34,50 @@ namespace PlantsVsZombiesStudio
         }
         private void ButtonModifyMoney_Click(object sender, RoutedEventArgs e)
         {
+            int money;
             ProcessButtonAnimation(sender, delegate
               {
                   if (IsGameExist)
-                      if (int.TryParse(TextBoxMoney.Text, out int Money))
-                          PVZ.SaveData.Money = Money;
+                      if (int.TryParse(TextBoxMoney.Text, out money))
+                          PVZ.SaveData.Money = money;
                       else if (CheckBoxForceCast.IsChecked.GetValueOrDefault())
-                          PVZ.SaveData.Money = TextBoxMoney.Text.GetHashCode();
+                      {
+                          var syntaxTree = SyntaxTree.Parse(TextBoxMoney.Text);
+                          var binder = new Binder();
+                          var boundExpression = binder.BindExpression(syntaxTree.Root);
+                          var diagnostics = binder.Diagnostic.ToArray();
+                          var builder = new StringBuilder();
+                          if (diagnostics.Any())
+                          {
+                              foreach (var diagnostic in diagnostics)
+                              {
+                                  builder.AppendLine(diagnostic);
+                              }
+                              ShowNotice("EVALUATE ERROR", builder.ToString(), false, null);
+                          }
+                          else
+                          {
+                              var evaluator = new Evaluator(boundExpression);
+                              var result = evaluator.Evaluate();
+                              if (result is int money)
+                              {
+                                  PVZ.SaveData.Money = money;
+                              }
+                              else
+                                  ShowNotice("ERROR", $"Can not parse evaluate result '{result}' to an integer.");
+                          }
+                      }
                       else
                           ShowNotice("ERROR", $"Can not parse \"{TextBoxMoney.Text}\" to an integer", false, null);
                   else
                       ShowNotice("GAME NOT FOUND", "Find game before modifying money.", false, null);
               });
         }
-
+        private bool _forceClose = false;
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            if (_forceClose)
+                return;
             ShowNotice("QUIT", "Are you sure want to quit?", true, delegate (bool Quit)
             {
                 if (Quit)
@@ -78,7 +111,31 @@ namespace PlantsVsZombiesStudio
                 else if (int.TryParse(TextBoxSun.Text, out int Sun))
                     PVZ.Sun = Sun;
                 else if (CheckBoxForceCast.IsChecked.GetValueOrDefault())
-                    PVZ.Sun = TextBoxSun.Text.GetHashCode();
+                {
+                    var binder = new Binder();
+                    var boundExpression = binder.BindExpression(SyntaxTree.Parse(TextBoxSun.Text).Root);
+                    var diagnostics = binder.Diagnostic.ToArray();
+                    var builder = new StringBuilder();
+                    if (diagnostics.Any())
+                    {
+                        foreach (var diagnostic in diagnostics)
+                        {
+                            builder.AppendLine(diagnostic);
+                        }
+                        ShowNotice("EVALUATE ERROR", builder.ToString(), false, null);
+                    }
+                    else
+                    {
+                        var evaluator = new Evaluator(boundExpression);
+                        var result = evaluator.Evaluate();
+                        if (result is int money)
+                        {
+                            PVZ.Sun = money;
+                        }
+                        else
+                            ShowNotice("ERROR", $"Can not parse evaluate result '{result}' to an integer.");
+                    }
+                }
                 else
                     ShowNotice("ERROR", $"Can not parse \"{TextBoxSun.Text}\" to an integer", false, null);
             });
@@ -87,6 +144,49 @@ namespace PlantsVsZombiesStudio
         {
             CloseCurrentDialog();
             _onDialogCloseAction?.Invoke(true);
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Snack.MessageQueue = new();
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+            Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            if(e.ExceptionObject is Exception exp)
+            {
+                UnhandledException(exp);
+            }
+            Task.Delay(-1);
+        }
+
+        private void Current_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            e.Handled = true;
+            UnhandledException(e.Exception);
+        }
+
+        private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            e.SetObserved();
+            UnhandledException(e.Exception);
+        }
+        private void UnhandledException(Exception e)
+        {
+            ShowNotice("AN ERROR OCCURED", e.Message);
+        }
+
+        private void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+            var window = new MainWindow();
+            Application.Current.MainWindow = window;
+            window.Show();
+            _forceClose = true;
+            Close();
+            GC.Collect();
         }
     }
 }

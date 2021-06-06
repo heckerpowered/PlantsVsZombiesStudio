@@ -11,6 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Jvav-Windows">
+      <HintPath>..\..\Jvav-Windows\bin\Release\net5.0\Jvav-Windows.dll</HintPath>
+    </Reference>
     <Reference Include="PVZClass">
       <HintPath>PVZClass.dll</HintPath>
     </Reference>

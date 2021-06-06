@@ -12,18 +12,18 @@ namespace PlantsVsZombiesStudio
         private void ShowNotice(string title, string text, bool showCancleButton = false, Action<bool> onClose = null)
         {
             TopDialogHost.ShowDialog(null);
-            Storyboard Board = new()
+            Storyboard board = new()
             {
                 Duration = TimeSpan.FromMilliseconds(300)
             };
-            DoubleAnimation Animation = new()
+            DoubleAnimation animation = new()
             {
                 From = 0,
                 To = 100,
                 Duration = TimeSpan.FromMilliseconds(300)
             };
-            Storyboard.SetTargetProperty(Animation, new PropertyPath(OpacityProperty));
-            Board.Children.Add(Animation);
+            Storyboard.SetTargetProperty(animation, new PropertyPath(OpacityProperty));
+            board.Children.Add(animation);
             TextNoticeTitle.Text = title;
             TextNoticeInformation.Text = text;
             CardNotice.Visibility = Visibility.Visible;
@@ -38,7 +38,7 @@ namespace PlantsVsZombiesStudio
                 ButtonCloseDialog.Content = "CLOSE";
             }
             _onDialogCloseAction = onClose;
-            Board.Begin(CardNotice);
+            board.Begin(CardNotice);
         }
         private void ProcessButtonAnimation(object sender, Action work)
         {
@@ -47,11 +47,11 @@ namespace PlantsVsZombiesStudio
                 if (button.Tag == null || !(bool)button.Tag)
                 {
                     button.Tag = true;
-                    double Width = button.Width;
-                    object Content = button.Content;
+                    double width = button.Width;
+                    object content = button.Content;
                     button.Content = FindResource("CircularProgressBar");
-                    Storyboard Board = new();
-                    DoubleAnimation Animation = new()
+                    Storyboard board = new();
+                    DoubleAnimation animation = new()
                     {
                         To = 60,
                         EasingFunction = new CubicEase
@@ -60,22 +60,22 @@ namespace PlantsVsZombiesStudio
                         },
                         Duration = TimeSpan.FromMilliseconds(500.0)
                     };
-                    Storyboard.SetTargetProperty(Animation, new PropertyPath("Width"));
-                    Board.Children.Add(Animation);
-                    Board.Completed += delegate (object s, EventArgs Event)
+                    Storyboard.SetTargetProperty(animation, new PropertyPath("Width"));
+                    board.Children.Add(animation);
+                    board.Completed += delegate (object s, EventArgs Event)
                     {
                         work();
-                        Animation.To = Width;
-                        Board = new Storyboard();
-                        Board.Completed += delegate (object ss, EventArgs ee)
+                        animation.To = width;
+                        board = new Storyboard();
+                        board.Completed += delegate (object ss, EventArgs ee)
                         {
                             button.Tag = false;
                         };
-                        Board.Children.Add(Animation);
-                        Board.Begin(button);
-                        button.Content = Content;
+                        board.Children.Add(animation);
+                        board.Begin(button);
+                        button.Content = content;
                     };
-                    Board.Begin(button);
+                    board.Begin(button);
                 }
             }
         }
