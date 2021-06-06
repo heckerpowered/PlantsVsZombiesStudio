@@ -95,7 +95,7 @@ namespace PlantsVsZombiesStudio
             Board.Children.Add(Animation);
             Board.Completed += Board_Completed;
             Board.Begin(CardNotice);
-            DialogSession currentSession = this.TopDialogHost.CurrentSession;
+            DialogSession currentSession = TopDialogHost.CurrentSession;
             if (currentSession != null)
             {
                 currentSession.Close();
