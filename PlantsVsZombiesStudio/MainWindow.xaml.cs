@@ -18,6 +18,8 @@ using System.Windows.Shapes;
 using Jvav.Syntax;
 using Jvav.Binding;
 using System;
+using PlantsVsZombiesStudio.I18n;
+using PlantsVsZombiesStudio.Setting;
 
 namespace PlantsVsZombiesStudio
 {
@@ -81,10 +83,27 @@ namespace PlantsVsZombiesStudio
             ShowNotice("QUIT", "Are you sure want to quit?", true, delegate (bool Quit)
             {
                 if (Quit)
-                    Application.Current.Shutdown();
+                    CloseWindow();
             });
             e.Cancel = true;
         }
+
+        private void CloseWindow()
+        {
+            try
+            {
+                Settings.SaveSettings();
+                Application.Current.Shutdown();
+            }
+            catch (Exception e)
+            {
+                ShowNotice("ERROR WHILE QUIT", $"{e.Message}\nClick \"YES\" to force quit." ,true, delegate(bool Quit)
+                {
+                    Application.Current.Shutdown();
+                });
+            }
+        }
+
         private void ButtonCancleDialog_Click(object sender, RoutedEventArgs e)
         {
             CloseCurrentDialog();
@@ -148,15 +167,17 @@ namespace PlantsVsZombiesStudio
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Snack.MessageQueue = new();
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
+            Snack.MessageQueue = new();
+            Settings.InitializateSettings();
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            if(e.ExceptionObject is Exception exp)
+            if (e.ExceptionObject is Exception exp)
             {
                 UnhandledException(exp);
             }

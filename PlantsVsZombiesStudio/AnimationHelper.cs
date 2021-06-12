@@ -3,43 +3,56 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using System.Linq;
 
 namespace PlantsVsZombiesStudio
 {
     public partial class MainWindow : Window
     {
         private Action<bool> _onDialogCloseAction = null;
+        private Action _nextAction = null;
         private void ShowNotice(string title, string text, bool showCancleButton = false, Action<bool> onClose = null)
         {
-            TopDialogHost.ShowDialog(null);
-            Storyboard board = new()
+            Dispatcher.Invoke(delegate
             {
-                Duration = TimeSpan.FromMilliseconds(300)
-            };
-            DoubleAnimation animation = new()
-            {
-                From = 0,
-                To = 100,
-                Duration = TimeSpan.FromMilliseconds(300)
-            };
-            Storyboard.SetTargetProperty(animation, new PropertyPath(OpacityProperty));
-            board.Children.Add(animation);
-            TextNoticeTitle.Text = title;
-            TextNoticeInformation.Text = text;
-            CardNotice.Visibility = Visibility.Visible;
-            if (showCancleButton)
-            {
-                ButtonCancleDialog.Visibility = Visibility.Visible;
-                ButtonCloseDialog.Content = "YES";
-            }
-            else
-            {
-                ButtonCancleDialog.Visibility = Visibility.Collapsed;
-                ButtonCloseDialog.Content = "CLOSE";
-            }
-            _onDialogCloseAction = onClose;
-            board.Begin(CardNotice);
+                if(CardNotice.Tag is bool b && b)
+                {
+                    _nextAction = delegate { ShowNotice(title, text, showCancleButton, onClose); };
+                    return;
+                }
+
+                TopDialogHost.IsOpen = true;
+                Storyboard board = new()
+                {
+                    Duration = TimeSpan.FromMilliseconds(300)
+                };
+                DoubleAnimation animation = new()
+                {
+                    From = 0,
+                    To = 100,
+                    Duration = TimeSpan.FromMilliseconds(300)
+                };
+                Storyboard.SetTargetProperty(animation, new PropertyPath(OpacityProperty));
+                board.Children.Add(animation);
+                TextNoticeTitle.Text = title;
+                TextNoticeInformation.Text = text;
+                CardNotice.Visibility = Visibility.Visible;
+                if (showCancleButton)
+                {
+                    ButtonCancleDialog.Visibility = Visibility.Visible;
+                    ButtonCloseDialog.Content = "YES";
+                }
+                else
+                {
+                    ButtonCancleDialog.Visibility = Visibility.Collapsed;
+                    ButtonCloseDialog.Content = "CLOSE";
+                }
+                _onDialogCloseAction = onClose;
+                CardNotice.Tag = true;
+                board.Begin(CardNotice);
+            });
         }
+
         private void ProcessButtonAnimation(object sender, Action work)
         {
             if (sender is Button button)
@@ -95,11 +108,19 @@ namespace PlantsVsZombiesStudio
             Board.Children.Add(Animation);
             Board.Completed += Board_Completed;
             Board.Begin(CardNotice);
-            TopDialogHost.CurrentSession?.Close();
+            TopDialogHost.IsOpen = false;
         }
         private void Board_Completed(object sender, EventArgs e)
         {
+            TopDialogHost.IsOpen = false;
             CardNotice.Visibility = Visibility.Collapsed;
+
+            CardNotice.Tag = false;
+            if (_nextAction != null)
+            {
+                _nextAction();
+                _nextAction = null;
+            }
         }
     }
 }
