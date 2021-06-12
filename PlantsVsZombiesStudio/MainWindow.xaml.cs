@@ -20,6 +20,7 @@ using Jvav.Binding;
 using System;
 using PlantsVsZombiesStudio.I18n;
 using PlantsVsZombiesStudio.Setting;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PlantsVsZombiesStudio
 {
@@ -34,6 +35,13 @@ namespace PlantsVsZombiesStudio
         {
             InitializeComponent();
         }
+
+        public string Query(string key)
+        {
+            return LanguageManager.CurrentLanguage.Query(key);
+        }
+
+        [SuppressMessage("Style", "IDE0018:Inline variable declaration", Justification = "<Pending>")]
         private void ButtonModifyMoney_Click(object sender, RoutedEventArgs e)
         {
             int money;
@@ -55,7 +63,7 @@ namespace PlantsVsZombiesStudio
                               {
                                   builder.AppendLine(diagnostic);
                               }
-                              ShowNotice("EVALUATE ERROR", builder.ToString(), false, null);
+                              ShowNotice(Query("evaluator.error"), builder.ToString(), false, null);
                           }
                           else
                           {
@@ -66,13 +74,13 @@ namespace PlantsVsZombiesStudio
                                   PVZ.SaveData.Money = money;
                               }
                               else
-                                  ShowNotice("ERROR", $"Can not parse evaluate result '{result}' to an integer.");
+                                  ShowNotice(Query("error"), string.Format(Query("error.evaluator"), result));
                           }
                       }
                       else
-                          ShowNotice("ERROR", $"Can not parse \"{TextBoxMoney.Text}\" to an integer", false, null);
+                          ShowNotice(Query("error"), string.Format(Query("error.parse"), TextBoxMoney.Text), false, null);
                   else
-                      ShowNotice("GAME NOT FOUND", "Find game before modifying money.", false, null);
+                      ShowNotice(Query("game.not_found"), Query("game.find.before_modify_money"), false, null);
               });
         }
         private bool _forceClose = false;
@@ -80,7 +88,11 @@ namespace PlantsVsZombiesStudio
         {
             if (_forceClose)
                 return;
-            ShowNotice("QUIT", "Are you sure want to quit?", true, delegate (bool Quit)
+
+            if (_isOpen)
+                CloseCurrentDialog();
+
+            ShowNotice(Query("quit"), Query("confirm.quit"), true, delegate (bool Quit)
             {
                 if (Quit)
                     CloseWindow();
@@ -97,10 +109,11 @@ namespace PlantsVsZombiesStudio
             }
             catch (Exception e)
             {
-                ShowNotice("ERROR WHILE QUIT", $"{e.Message}\nClick \"YES\" to force quit." ,true, delegate(bool Quit)
-                {
-                    Application.Current.Shutdown();
-                });
+                ShowNotice(Query("error.while_quit"), string.Format(Query("error.force_quit"), e.Message), true, delegate (bool Quit)
+                 {
+                     if (Quit)
+                         Application.Current.Shutdown();
+                 });
             }
         }
 
@@ -114,11 +127,11 @@ namespace PlantsVsZombiesStudio
             ProcessButtonAnimation(sender, delegate
             {
                 if (IsGameExist)
-                    ShowNotice("GAME IS ALREADY FOUND", "The game process is already found.", false, null);
+                    ShowNotice(Query("game.alerady_found.title"), Query("game.alerady_found.text"), false, null);
                 else if (PVZ.RunGame())
-                    Snack.MessageQueue.Enqueue("GAME FOUND");
+                    Snack.MessageQueue.Enqueue(Query("game.found"));
                 else
-                    ShowNotice("GAME NOT FOUND", "Can not found the game process.", false, null);
+                    ShowNotice(Query("game.not_found"), Query("game.not_found.text"), false, null);
             });
         }
         private void Button_Click_2(object sender, RoutedEventArgs e)
@@ -126,7 +139,7 @@ namespace PlantsVsZombiesStudio
             ProcessButtonAnimation(sender, delegate
             {
                 if (PVZ.BaseAddress == 0)
-                    ShowNotice("NOT IN GAME", "Join a game before modifying sun.", false, null);
+                    ShowNotice(Query("game.not_in_game"), Query("game.join.before_modify_sun"), false, null);
                 else if (int.TryParse(TextBoxSun.Text, out int Sun))
                     PVZ.Sun = Sun;
                 else if (CheckBoxForceCast.IsChecked.GetValueOrDefault())
@@ -141,7 +154,7 @@ namespace PlantsVsZombiesStudio
                         {
                             builder.AppendLine(diagnostic);
                         }
-                        ShowNotice("EVALUATE ERROR", builder.ToString(), false, null);
+                        ShowNotice(Query("evaluator.error"), builder.ToString(), false, null);
                     }
                     else
                     {
@@ -152,11 +165,11 @@ namespace PlantsVsZombiesStudio
                             PVZ.Sun = money;
                         }
                         else
-                            ShowNotice("ERROR", $"Can not parse evaluate result '{result}' to an integer.");
+                            ShowNotice(Query("error"), string.Format(Query("error.evaluator"), result));
                     }
                 }
                 else
-                    ShowNotice("ERROR", $"Can not parse \"{TextBoxSun.Text}\" to an integer", false, null);
+                    ShowNotice(Query("error"), string.Format(Query("error.parse"), TextBoxSun.Text), false, null);
             });
         }
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -173,6 +186,10 @@ namespace PlantsVsZombiesStudio
 
             Snack.MessageQueue = new();
             Settings.InitializateSettings();
+            LanguageManager.EnumLanguages();
+
+            LanguageManager.CurrentLanguage = LanguageManager.LoadedLanguages[Settings.Query<string>("language")];
+
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -197,7 +214,7 @@ namespace PlantsVsZombiesStudio
         }
         private void UnhandledException(Exception e)
         {
-            ShowNotice("AN ERROR OCCURED", e.Message);
+            ShowNotice(Query("error.occured"), e.Message);
         }
 
         private void Button_Click_3(object sender, RoutedEventArgs e)

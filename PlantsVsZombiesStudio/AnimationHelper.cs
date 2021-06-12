@@ -11,6 +11,7 @@ namespace PlantsVsZombiesStudio
     {
         private Action<bool> _onDialogCloseAction = null;
         private Action _nextAction = null;
+        private bool _isOpen = false;
         private void ShowNotice(string title, string text, bool showCancleButton = false, Action<bool> onClose = null)
         {
             Dispatcher.Invoke(delegate
@@ -49,6 +50,7 @@ namespace PlantsVsZombiesStudio
                 }
                 _onDialogCloseAction = onClose;
                 CardNotice.Tag = true;
+                _isOpen = true;
                 board.Begin(CardNotice);
             });
         }
@@ -107,6 +109,7 @@ namespace PlantsVsZombiesStudio
             Storyboard.SetTargetProperty(Animation, new PropertyPath(OpacityProperty));
             Board.Children.Add(Animation);
             Board.Completed += Board_Completed;
+            _isOpen = false;
             Board.Begin(CardNotice);
             TopDialogHost.IsOpen = false;
         }

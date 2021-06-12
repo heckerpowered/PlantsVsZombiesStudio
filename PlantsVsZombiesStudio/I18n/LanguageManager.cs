@@ -9,6 +9,11 @@ namespace PlantsVsZombiesStudio.I18n
 {
     public static class LanguageManager
     {
+        public static Dictionary<string, Language> LoadedLanguages => _languages;
+        private static Dictionary<string, Language> _languages = new();
+
+        public static Language CurrentLanguage { get; set; }
+
         public static Language LoadLanguage(string path)
         {
             var lines = File.ReadAllLines(path);
@@ -24,6 +29,19 @@ namespace PlantsVsZombiesStudio.I18n
             }
 
             return new Language(Path.GetFileNameWithoutExtension(path), dictionary);
+        }
+
+        public static void EnumLanguages()
+        {
+            var directoryInfo = new DirectoryInfo("lang");
+
+            if (!directoryInfo.Exists)
+                directoryInfo.Create();
+
+            foreach (var file in directoryInfo.GetFiles())
+            {
+                _languages.Add(Path.GetFileNameWithoutExtension(file.Name), LoadLanguage(file.FullName));
+            }
         }
     }
 }

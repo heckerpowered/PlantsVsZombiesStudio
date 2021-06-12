@@ -21,8 +21,8 @@ namespace PlantsVsZombiesStudio.Setting
         }
 
         protected virtual SettingType Type { get; }
-        private string Name { get; }
-        private object Value { get; set; }
+        public string Name { get; }
+        public object Value { get; set; }
 
         private static bool _initializated = false;
 
@@ -38,14 +38,16 @@ namespace PlantsVsZombiesStudio.Setting
             _initializated = true;
 
             if (!File.Exists(Path))
+            {
                 File.Create(Path).Close();
 
-            if (LoadSettings() == null)
-            {
                 _ = new Settings("evaluator", false);
+                _ = new Settings("language", "en_us");
 
                 SaveSettings();
             }
+            else
+                LoadSettings();
         }
 
         public static void SaveSettings() => File.WriteAllText(Path, JsonConvert.SerializeObject(_settingsDictionary.Values));
