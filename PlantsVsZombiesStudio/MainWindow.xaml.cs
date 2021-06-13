@@ -104,6 +104,7 @@ namespace PlantsVsZombiesStudio
         {
             try
             {
+                SaveSettings();
                 Settings.SaveSettings();
                 Application.Current.Shutdown();
             }
@@ -117,6 +118,11 @@ namespace PlantsVsZombiesStudio
             }
         }
 
+        private void SaveSettings()
+        {
+            Settings.Put("evaluator", CheckBoxForceCast.IsChecked.GetValueOrDefault());
+        }
+
         private void ButtonCancleDialog_Click(object sender, RoutedEventArgs e)
         {
             CloseCurrentDialog();
@@ -127,7 +133,7 @@ namespace PlantsVsZombiesStudio
             ProcessButtonAnimation(sender, delegate
             {
                 if (IsGameExist)
-                    ShowNotice(Query("game.alerady_found.title"), Query("game.alerady_found.text"), false, null);
+                    ShowNotice(Query("game.already_found.title"), Query("game.already_found.text"), false, null);
                 else if (PVZ.RunGame())
                     Snack.MessageQueue.Enqueue(Query("game.found"));
                 else
@@ -189,7 +195,8 @@ namespace PlantsVsZombiesStudio
             LanguageManager.EnumLanguages();
 
             LanguageManager.CurrentLanguage = LanguageManager.LoadedLanguages[Settings.Query<string>("language")];
-
+            CheckBoxForceCast.IsChecked = Settings.Query<bool>("evaluator");
+            RegisterControl(CheckBoxForceCast, "control.force_cast");
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)

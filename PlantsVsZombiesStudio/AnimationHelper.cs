@@ -4,9 +4,27 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace PlantsVsZombiesStudio
 {
+    public partial class MainWindow : Window
+    {
+        private Dictionary<string,ContentControl> _registeredControls = new();
+
+        private void RegisterControl(ContentControl control, string name)
+        {
+            _registeredControls.Add(name, control);
+        }
+        
+        private void UpdateControls()
+        {
+            foreach(var key in _registeredControls)
+            {
+                key.Value.Content = Query(key.Key);
+            }
+        }
+    }
     public partial class MainWindow : Window
     {
         private Action<bool> _onDialogCloseAction = null;

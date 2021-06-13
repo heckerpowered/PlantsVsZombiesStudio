@@ -65,6 +65,7 @@
                                 <Button
 									Style="{StaticResource MaterialDesignFlatButton}"
 									Background="#bdbdbd"
+                                    Name="ButtonReloadWindow"
 									Content="RELOAD WINDOW"
 									Width="Auto"
 									Height="32"
@@ -153,7 +154,7 @@
                                         <CheckBox
 											Name="CheckBoxForceCast"
 											materialDesign:CheckBoxAssist.CheckBoxSize="24"
-											Content="Allow to parse a expression to integer." />
+											Content="Allow to parse a expression to integer."/>
                                     </StackPanel>
                                 </materialDesign:Card>
                             </StackPanel>
@@ -167,7 +168,6 @@
         <materialDesign:Card
 			Name="CardNotice"
             materialDesign:ShadowAssist.ShadowDepth="Depth5"
-			
 			Height="200"
 			Background="#bdbdbd"
 			Visibility="Collapsed"

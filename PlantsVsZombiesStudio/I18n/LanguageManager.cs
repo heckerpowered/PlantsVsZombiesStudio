@@ -33,6 +33,8 @@ namespace PlantsVsZombiesStudio.I18n
 
         public static void EnumLanguages()
         {
+            _languages.Clear();
+
             var directoryInfo = new DirectoryInfo("lang");
 
             if (!directoryInfo.Exists)
