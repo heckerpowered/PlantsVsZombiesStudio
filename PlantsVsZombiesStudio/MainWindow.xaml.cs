@@ -21,6 +21,7 @@ using System;
 using PlantsVsZombiesStudio.I18n;
 using PlantsVsZombiesStudio.Setting;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Shell;
 
 namespace PlantsVsZombiesStudio
 {
@@ -221,6 +222,7 @@ namespace PlantsVsZombiesStudio
         }
         private void UnhandledException(Exception e)
         {
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Error;
             ShowNotice(Query("error.occured"), e.Message);
         }
 

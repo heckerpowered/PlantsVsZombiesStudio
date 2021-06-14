@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
+using System.Windows.Shell;
 
 namespace PlantsVsZombiesStudio
 {
@@ -107,7 +109,9 @@ namespace PlantsVsZombiesStudio
                         board.Children.Add(animation);
                         board.Begin(button);
                         button.Content = content;
+                        TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
                     };
+                    TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
                     board.Begin(button);
                 }
             }
@@ -130,6 +134,7 @@ namespace PlantsVsZombiesStudio
             _isOpen = false;
             Board.Begin(CardNotice);
             TopDialogHost.IsOpen = false;
+            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
         }
         private void Board_Completed(object sender, EventArgs e)
         {
