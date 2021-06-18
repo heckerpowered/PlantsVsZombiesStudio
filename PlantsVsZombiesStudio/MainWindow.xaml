@@ -148,9 +148,15 @@
                         <ScrollViewer>
                             <StackPanel
 								Margin="16">
-                                <TextBox
-									materialDesign:HintAssist.Hint="Search settings"
-									Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                                <Button
+									Name="ButtonCheckUpdate"
+									Margin="16"
+									Style="{StaticResource MaterialDesignFlatButton}"
+									Background="#bdbdbd"
+									Content="CHECK FOR UPDATES"
+									Width="177"
+									Height="32"
+									Click="ButtonCheckUpdate_Click" HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
                                 <materialDesign:Card
 									Margin="16">
                                     <StackPanel

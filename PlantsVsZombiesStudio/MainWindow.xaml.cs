@@ -22,6 +22,9 @@ using PlantsVsZombiesStudio.I18n;
 using PlantsVsZombiesStudio.Setting;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Shell;
+using System.Net;
+using MultiThreadDownloader;
+using System.Diagnostics;
 
 namespace PlantsVsZombiesStudio
 {
@@ -35,6 +38,7 @@ namespace PlantsVsZombiesStudio
         public MainWindow()
         {
             InitializeComponent();
+            InitializeAnimation();
         }
 
         public string Query(string key)
@@ -136,23 +140,25 @@ namespace PlantsVsZombiesStudio
                 if (IsGameExist)
                     ShowNotice(Query("game.already_found.title"), Query("game.already_found.text"), false, null);
                 else if (PVZ.RunGame())
-                    Snack.MessageQueue.Enqueue(Query("game.found"));
+                    EnqueueMessage(Query("game.found"));
                 else
                     ShowNotice(Query("game.not_found"), Query("game.not_found.text"), false, null);
             });
         }
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
+            string text = TextBoxSun.Text;
+            bool forceCast = CheckBoxForceCast.IsChecked.GetValueOrDefault();
             ProcessButtonAnimation(sender, delegate
             {
                 if (PVZ.BaseAddress == 0)
                     ShowNotice(Query("game.not_in_game"), Query("game.join.before_modify_sun"), false, null);
-                else if (int.TryParse(TextBoxSun.Text, out int Sun))
+                else if (int.TryParse(text, out int Sun))
                     PVZ.Sun = Sun;
-                else if (CheckBoxForceCast.IsChecked.GetValueOrDefault())
+                else if (forceCast)
                 {
                     var binder = new Binder();
-                    var boundExpression = binder.BindExpression(SyntaxTree.Parse(TextBoxSun.Text).Root);
+                    var boundExpression = binder.BindExpression(SyntaxTree.Parse(text).Root);
                     var diagnostics = binder.Diagnostic.ToArray();
                     var builder = new StringBuilder();
                     if (diagnostics.Any())
@@ -161,6 +167,7 @@ namespace PlantsVsZombiesStudio
                         {
                             builder.AppendLine(diagnostic);
                         }
+
                         ShowNotice(Query("evaluator.error"), builder.ToString(), false, null);
                     }
                     else
@@ -176,7 +183,7 @@ namespace PlantsVsZombiesStudio
                     }
                 }
                 else
-                    ShowNotice(Query("error"), string.Format(Query("error.parse"), TextBoxSun.Text), false, null);
+                    ShowNotice(Query("error"), string.Format(Query("error.parse"), text), false, null);
             });
         }
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -234,6 +241,28 @@ namespace PlantsVsZombiesStudio
             _forceClose = true;
             Close();
             GC.Collect();
+        }
+
+        private void ButtonCheckUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessButtonAnimation(sender, delegate
+             {
+                 if (VersionHelper.CheckUpdate())
+                     ShowNotice(Query("update.found"), Query("confirm.update"), true, delegate (bool b)
+                        {
+                            if (b)
+                            {
+                                ProcessButtonAnimation(sender, delegate
+                                {
+                                    var task = new SingleThreadDownloadTask(new(VersionHelper.FileUrl, "net5.0-windows.rar"));
+                                    task.Download();
+                                    ShowNotice(Query("update.install"), Query("update.install.restart"));
+                                });
+                            }
+                        });
+                 else
+                     ShowNotice(Query("update.not_found"), Query("update.not_found.text"));
+             }, false);
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Shell;
+using System.Threading.Tasks;
 
 namespace PlantsVsZombiesStudio
 {
@@ -32,6 +33,35 @@ namespace PlantsVsZombiesStudio
         private Action<bool> _onDialogCloseAction = null;
         private Action _nextAction = null;
         private bool _isOpen = false;
+
+        private readonly Storyboard showStoryboard = new()
+        {
+            Duration = TimeSpan.FromMilliseconds(300)
+        };
+        private readonly DoubleAnimation showAnimation = new()
+        {
+            From = 0,
+            To = 100,
+            Duration = TimeSpan.FromMilliseconds(300)
+        };
+        private readonly Storyboard closeStoryboard = new()
+        {
+            Duration = TimeSpan.FromMilliseconds(300)
+        };
+        private readonly DoubleAnimation closeAnimation = new()
+        {
+            From = 100,
+            To = 0,
+            Duration = TimeSpan.FromMilliseconds(300)
+        };
+        private void InitializeAnimation()
+        {
+            Storyboard.SetTargetProperty(showAnimation, new PropertyPath(OpacityProperty));
+            Storyboard.SetTargetProperty(closeAnimation, new PropertyPath(OpacityProperty));
+            showStoryboard.Children.Add(showAnimation);
+            closeStoryboard.Children.Add(closeAnimation);
+            closeStoryboard.Completed += Board_Completed;
+        }
         private void ShowNotice(string title, string text, bool showCancleButton = false, Action<bool> onClose = null)
         {
             Dispatcher.Invoke(delegate
@@ -42,19 +72,6 @@ namespace PlantsVsZombiesStudio
                     return;
                 }
 
-                TopDialogHost.IsOpen = true;
-                Storyboard board = new()
-                {
-                    Duration = TimeSpan.FromMilliseconds(300)
-                };
-                DoubleAnimation animation = new()
-                {
-                    From = 0,
-                    To = 100,
-                    Duration = TimeSpan.FromMilliseconds(300)
-                };
-                Storyboard.SetTargetProperty(animation, new PropertyPath(OpacityProperty));
-                board.Children.Add(animation);
                 TextNoticeTitle.Text = title;
                 TextNoticeInformation.Text = text;
                 CardNotice.Visibility = Visibility.Visible;
@@ -71,11 +88,21 @@ namespace PlantsVsZombiesStudio
                 _onDialogCloseAction = onClose;
                 CardNotice.Tag = true;
                 _isOpen = true;
-                board.Begin(CardNotice);
+                TopDialogHost.IsOpen = true;
+                showStoryboard.Begin(CardNotice);
             });
         }
-
-        private void ProcessButtonAnimation(object sender, Action work)
+        private ProgressBar AllocateCircularProgressBar(bool isIndeterminate = true)
+        {
+            return new ProgressBar
+            {
+                Style = (Style)FindResource("MaterialDesignCircularProgressBar"),
+                Width = 20,
+                Height = 20,
+                IsIndeterminate = isIndeterminate
+            };
+        }
+        private void ProcessButtonAnimation(object sender, Action work, bool Animation = true)
         {
             if (sender is Button button)
             {
@@ -84,11 +111,11 @@ namespace PlantsVsZombiesStudio
                     button.Tag = true;
                     double width = button.Width;
                     object content = button.Content;
-                    button.Content = FindResource("CircularProgressBar");
+                    button.Content = AllocateCircularProgressBar();
                     Storyboard board = new();
                     DoubleAnimation animation = new()
                     {
-                        To = 60,
+                        To = Animation ? 60 : width,
                         EasingFunction = new CubicEase
                         {
                             EasingMode = EasingMode.EaseOut
@@ -97,9 +124,17 @@ namespace PlantsVsZombiesStudio
                     };
                     Storyboard.SetTargetProperty(animation, new PropertyPath("Width"));
                     board.Children.Add(animation);
-                    board.Completed += delegate (object s, EventArgs Event)
+                    board.Completed += async delegate (object s, EventArgs Event)
                     {
-                        work();
+                        try
+                        {
+                            var task = Task.Factory.StartNew(work);
+                            await task;
+                        }
+                        catch (Exception e) 
+                        {
+                            UnhandledException(e);
+                        }
                         animation.To = width;
                         board = new Storyboard();
                         board.Completed += delegate (object ss, EventArgs ee)
@@ -118,23 +153,13 @@ namespace PlantsVsZombiesStudio
         }
         private void CloseCurrentDialog()
         {
-            Storyboard Board = new()
+            Dispatcher.Invoke(delegate
             {
-                Duration = TimeSpan.FromMilliseconds(300.0)
-            };
-            DoubleAnimation Animation = new()
-            {
-                From = 100,
-                To = 0.0,
-                Duration = TimeSpan.FromMilliseconds(300.0)
-            };
-            Storyboard.SetTargetProperty(Animation, new PropertyPath(OpacityProperty));
-            Board.Children.Add(Animation);
-            Board.Completed += Board_Completed;
-            _isOpen = false;
-            Board.Begin(CardNotice);
-            TopDialogHost.IsOpen = false;
-            TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+                _isOpen = false;
+                TopDialogHost.IsOpen = false;
+                closeStoryboard.Begin(CardNotice);
+                TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+            });
         }
         private void Board_Completed(object sender, EventArgs e)
         {
@@ -147,6 +172,14 @@ namespace PlantsVsZombiesStudio
                 _nextAction();
                 _nextAction = null;
             }
+        }
+
+        private void EnqueueMessage(string message)
+        {
+            Dispatcher.Invoke(delegate
+            {
+                Snack.MessageQueue.Enqueue(message);
+            });
         }
     }
 }
