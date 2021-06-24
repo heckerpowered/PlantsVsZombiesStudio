@@ -1,30 +1,18 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PVZClass;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using MaterialDesignThemes.Wpf;
-using MaterialDesignColors;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using Jvav.Binding;
 using Jvav.Syntax;
-using Jvav.Binding;
-using System;
 using PlantsVsZombiesStudio.I18n;
 using PlantsVsZombiesStudio.Setting;
-using System.Diagnostics.CodeAnalysis;
-using System.Windows.Shell;
-using System.Net;
-using MultiThreadDownloader;
+using PVZClass;
+using System;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Shell;
 
 namespace PlantsVsZombiesStudio
 {
@@ -231,6 +219,7 @@ namespace PlantsVsZombiesStudio
         {
             TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Error;
             ShowNotice(Query("error.occured"), e.Message);
+            Debug.WriteLine(e.ToString());
         }
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
@@ -245,24 +234,13 @@ namespace PlantsVsZombiesStudio
 
         private void ButtonCheckUpdate_Click(object sender, RoutedEventArgs e)
         {
-            ProcessButtonAnimation(sender, delegate
-             {
-                 if (VersionHelper.CheckUpdate())
-                     ShowNotice(Query("update.found"), Query("confirm.update"), true, delegate (bool b)
-                        {
-                            if (b)
-                            {
-                                ProcessButtonAnimation(sender, delegate
-                                {
-                                    var task = new SingleThreadDownloadTask(new(VersionHelper.FileUrl, "net5.0-windows.rar"));
-                                    task.Download();
-                                    ShowNotice(Query("update.install"), Query("update.install.restart"));
-                                });
-                            }
-                        });
-                 else
-                     ShowNotice(Query("update.not_found"), Query("update.not_found.text"));
-             }, false);
+            var ping = new Ping();
+            if (ping.Send("gitee.com").Status != IPStatus.Success)
+            {
+                ShowNotice(Query("network.connection.disconnect"), Query("network.connection.disconnect.text"));
+                return;
+            }
+
         }
     }
 }

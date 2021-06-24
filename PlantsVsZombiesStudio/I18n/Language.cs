@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Windows;
 
 namespace PlantsVsZombiesStudio.I18n
 {
     public class Language
     {
-        public Language(string languageName, Dictionary<string,string> dictionary)
+        public Language(string languageName, Dictionary<string, string> dictionary)
         {
             LanguageName = languageName;
             Dictionary = dictionary;
@@ -23,6 +20,16 @@ namespace PlantsVsZombiesStudio.I18n
                 return Dictionary[Key];
 
             return Key;
+        }
+
+        public ResourceDictionary ToResourceDictionary()
+        {
+            var resourceDictionary = new ResourceDictionary();
+
+            foreach (var item in Dictionary)
+                resourceDictionary.Add(item.Key, item.Value);
+
+            return resourceDictionary;
         }
     }
 }

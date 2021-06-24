@@ -13,7 +13,7 @@
         TextOptions.TextHintingMode="Fixed"
         TextOptions.TextRenderingMode="ClearType"
         AllowDrop="True"
-	    Title="Plants Vs. Zombies Studio"
+	    Title="Plants Vs. Zombies Studio 2021"
         Loaded="Window_Loaded"
 	    Height="720"
 	    Width="1280">
@@ -200,9 +200,7 @@
 							Margin="16"/>
                     </materialDesign:Card>
                     <ScrollViewer Margin="16" Height="Auto">
-                        <TextBlock
-						Name="TextNoticeInformation"
-						Text="Information"/>
+                        <ContentControl Name="CardContent" HorizontalAlignment="Left"/>
                     </ScrollViewer>
                 </StackPanel>
                 <StackPanel

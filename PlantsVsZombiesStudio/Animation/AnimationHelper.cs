@@ -1,28 +1,25 @@
-﻿using MaterialDesignThemes.Wpf;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading;
 using System.Windows.Shell;
-using System.Threading.Tasks;
 
 namespace PlantsVsZombiesStudio
 {
     public partial class MainWindow : Window
     {
-        private Dictionary<string,ContentControl> _registeredControls = new();
+        private Dictionary<string, ContentControl> _registeredControls = new();
 
         private void RegisterControl(ContentControl control, string name)
         {
             _registeredControls.Add(name, control);
         }
-        
+
         private void UpdateControls()
         {
-            foreach(var key in _registeredControls)
+            foreach (var key in _registeredControls)
             {
                 key.Value.Content = Query(key.Key);
             }
@@ -62,18 +59,18 @@ namespace PlantsVsZombiesStudio
             closeStoryboard.Children.Add(closeAnimation);
             closeStoryboard.Completed += Board_Completed;
         }
-        private void ShowNotice(string title, string text, bool showCancleButton = false, Action<bool> onClose = null)
+        private void ShowNotice(string title, object content, bool showCancleButton = false, Action<bool> onClose = null)
         {
             Dispatcher.Invoke(delegate
             {
-                if(CardNotice.Tag is bool b && b)
+                if (CardNotice.Tag is bool b && b)
                 {
-                    _nextAction = delegate { ShowNotice(title, text, showCancleButton, onClose); };
+                    _nextAction = delegate { ShowNotice(title, content, showCancleButton, onClose); };
                     return;
                 }
 
                 TextNoticeTitle.Text = title;
-                TextNoticeInformation.Text = text;
+                CardContent.Content = content;
                 CardNotice.Visibility = Visibility.Visible;
                 if (showCancleButton)
                 {
@@ -131,7 +128,7 @@ namespace PlantsVsZombiesStudio
                             var task = Task.Factory.StartNew(work);
                             await task;
                         }
-                        catch (Exception e) 
+                        catch (Exception e)
                         {
                             UnhandledException(e);
                         }
