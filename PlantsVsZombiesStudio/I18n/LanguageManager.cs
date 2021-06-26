@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Xml.Linq;
 
 namespace PlantsVsZombiesStudio.I18n
 {
@@ -25,6 +26,22 @@ namespace PlantsVsZombiesStudio.I18n
             }
 
             return new Language(Path.GetFileNameWithoutExtension(path), dictionary);
+        }
+        public static Language GetLanguageByName(string name)
+        {
+            foreach(var item in LoadedLanguages)  
+                if (item.Value.Query("#language_name") == name)
+                    return item.Value;
+
+            throw new FileNotFoundException(name);
+        }
+        public static Language  GetLanguageById(string id)
+        {
+            foreach (var item in LoadedLanguages)
+                if (item.Key == id)
+                    return item.Value;
+
+            throw new FileNotFoundException(id);
         }
 
         public static void EnumLanguages()

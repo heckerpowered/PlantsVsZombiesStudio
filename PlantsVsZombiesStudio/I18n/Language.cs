@@ -31,5 +31,10 @@ namespace PlantsVsZombiesStudio.I18n
 
             return resourceDictionary;
         }
+
+        public void SetAsDefaultLanguage()
+        {
+            Application.Current.Resources.MergedDictionaries[0] = ToResourceDictionary();
+        }
     }
 }

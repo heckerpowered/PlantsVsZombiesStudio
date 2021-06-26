@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shell;
 
@@ -10,26 +12,9 @@ namespace PlantsVsZombiesStudio
 {
     public partial class MainWindow : Window
     {
-        private Dictionary<string, ContentControl> _registeredControls = new();
-
-        private void RegisterControl(ContentControl control, string name)
-        {
-            _registeredControls.Add(name, control);
-        }
-
-        private void UpdateControls()
-        {
-            foreach (var key in _registeredControls)
-            {
-                key.Value.Content = Query(key.Key);
-            }
-        }
-    }
-    public partial class MainWindow : Window
-    {
         private Action<bool> _onDialogCloseAction = null;
-        private Action _nextAction = null;
-        private bool _isOpen = false;
+        private Action _nextAction;
+        private bool _isOpen;
 
         private readonly Storyboard showStoryboard = new()
         {
@@ -59,7 +44,7 @@ namespace PlantsVsZombiesStudio
             closeStoryboard.Children.Add(closeAnimation);
             closeStoryboard.Completed += Board_Completed;
         }
-        private void ShowNotice(string title, object content, bool showCancleButton = false, Action<bool> onClose = null)
+        internal void ShowNotice(string title, object content, bool showCancleButton = false, Action<bool> onClose = null)
         {
             Dispatcher.Invoke(delegate
             {
@@ -75,12 +60,12 @@ namespace PlantsVsZombiesStudio
                 if (showCancleButton)
                 {
                     ButtonCancleDialog.Visibility = Visibility.Visible;
-                    ButtonCloseDialog.Content = "YES";
+                    ButtonCloseDialog.Content = Query("Yes");
                 }
                 else
                 {
                     ButtonCancleDialog.Visibility = Visibility.Collapsed;
-                    ButtonCloseDialog.Content = "CLOSE";
+                    ButtonCloseDialog.Content = Query("Close");
                 }
                 _onDialogCloseAction = onClose;
                 CardNotice.Tag = true;
@@ -99,18 +84,19 @@ namespace PlantsVsZombiesStudio
                 IsIndeterminate = isIndeterminate
             };
         }
-        private void ProcessButtonAnimation(object sender, Action work, bool Animation = true)
+        internal void ProcessButtonAnimation(object sender, Action work, bool Animation = true)
         {
             if (sender is Button button)
             {
                 if (button.Tag == null || !(bool)button.Tag)
                 {
                     button.Tag = true;
-                    double width = button.Width;
+                    var width = button.ActualWidth;
+                    button.Width = width;
                     object content = button.Content;
                     button.Content = AllocateCircularProgressBar();
-                    Storyboard board = new();
-                    DoubleAnimation animation = new()
+                    var board = new Storyboard();
+                    var animation = new DoubleAnimation()
                     {
                         To = Animation ? 60 : width,
                         EasingFunction = new CubicEase
@@ -125,8 +111,7 @@ namespace PlantsVsZombiesStudio
                     {
                         try
                         {
-                            var task = Task.Factory.StartNew(work);
-                            await task;
+                            await Task.Factory.StartNew(work);
                         }
                         catch (Exception e)
                         {
@@ -141,6 +126,59 @@ namespace PlantsVsZombiesStudio
                         board.Children.Add(animation);
                         board.Begin(button);
                         button.Content = content;
+                        TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+                    };
+                    TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
+                    board.Begin(button);
+                }
+            }
+        }
+
+        public void ProcessButtonAnimationWithContent(object sender,string content, Action work, bool Animation = true)
+        {
+            if (sender is Button button)
+            {
+                if (button.Tag == null || !(bool)button.Tag)
+                {
+                    button.Tag = true;
+                    var width = button.ActualWidth;
+                    button.Width = width;
+                    var originalContent = button.Content;
+                    button.Content = content;
+#pragma warning disable CS0618 // Type or member is obsolete
+                    var formattedText = new FormattedText(content, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(FontFamily, FontStyle, FontWeight, FontStretch), FontSize, Brushes.Black);
+#pragma warning restore CS0618 // Type or member is obsolete
+                    var board = new Storyboard();
+                    var animation = new DoubleAnimation()
+                    {
+                        To = Animation ? formattedText.Width : width,
+                        EasingFunction = new CubicEase
+                        {
+                            EasingMode = EasingMode.EaseOut
+                        },
+                        Duration = TimeSpan.FromMilliseconds(500.0)
+                    };
+                    Storyboard.SetTargetProperty(animation, new PropertyPath("Width"));
+                    board.Children.Add(animation);
+                    board.Completed += async delegate (object s, EventArgs Event)
+                    {
+                        try
+                        {
+                            await Task.Factory.StartNew(work);
+                        }
+                        catch (Exception e)
+                        {
+                            UnhandledException(e);
+                        }
+                        animation.To = width;
+                        board = new Storyboard();
+                        board.Completed += delegate (object ss, EventArgs ee)
+                        {
+                            button.Tag = false;
+                        };
+                        board.Children.Add(animation);
+                        board.Begin(button);
+                        button.Content = originalContent;
                         TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
                     };
                     TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
