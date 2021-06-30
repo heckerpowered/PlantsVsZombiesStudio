@@ -1,0 +1,34 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:system="clr-namespace:System;assembly=netstandard">
+    <system:String x:Key="FindGame">FIND GAME</system:String>
+    <system:String x:Key="Resources">RESOURCES</system:String>
+    <system:String x:Key="ModifySun">MODIFY SUN</system:String>
+    <system:String x:Key="ModifyMoney">MODIFY MONEY</system:String>
+    <system:String x:Key="Options">OPTIONS</system:String>
+    <system:String x:Key="Sun">Sun</system:String>
+    <system:String x:Key="Money">Money</system:String>
+    <system:String x:Key="ReloadWindow">RELOAD WINDOW</system:String>
+    <system:String x:Key="Parser">Allow to parse a expression to integer.</system:String>
+    <system:String x:Key="Evaluator">EVALUATOR</system:String>
+    <system:String x:Key="Close">CLOSE</system:String>
+    <system:String x:Key="No">NO</system:String>
+    <system:String x:Key="Language">LANGUAGE</system:String>
+    <system:String x:Key="General">GENERAL</system:String>
+    <system:String x:Key="BackgroundRun">Background running</system:String>
+    <system:String x:Key="FreePlant">Free planting</system:String>
+    <system:String x:Key="NoCd">No CD</system:String>
+    <system:String x:Key="AutoCollect">Auto collect</system:String>
+    <system:String x:Key="IgnoreResources">IgnoreResources</system:String>
+    <system:String x:Key="ShowHiddenLevel">Show hidden level</system:String>
+    <system:String x:Key="Overlapping">Overlapping</system:String>
+    <system:String x:Key="FullScreenFog">Full-screen fog</system:String>
+    <system:String x:Key="ConveyNoDelay">Convery no delay</system:String>
+    <system:String x:Key="SuspendZombieSpawn">Suspend zombie spawn</system:String>
+    <system:String x:Key="ResourcesNoLimit">Resources no limit</system:String>
+    <system:String x:Key="VaseHack">Vase-hack</system:String>
+    <system:String x:Key="FogHack">Fog-hack</system:String>
+    <system:String x:Key="LockShovel">Lock shovel</system:String>
+    <system:String x:Key="KillZombies">Kill zombies</system:String>
+    <system:String x:Key="HypnoZombies">Hypno zombies</system:String>
+    <system:String x:Key="CleanPlants">Clean plants</system:String>
+</ResourceDictionary>

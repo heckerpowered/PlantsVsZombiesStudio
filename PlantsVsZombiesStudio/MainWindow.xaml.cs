@@ -1,21 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Media;
-using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using PlantsVsZombiesStudio.Client;
 using System.Windows.Shell;
-
-using Jvav.Binding;
-using Jvav.Syntax;
 
 using PlantsVsZombiesStudio.I18n;
 using PlantsVsZombiesStudio.Setting;
@@ -30,15 +24,17 @@ namespace PlantsVsZombiesStudio
     public partial class MainWindow : Window, IDisposable
     {
         public static bool IsGameExist => PVZ.Game?.HasExited == false;
-        public static bool NeedToReload;
-
         public MainWindow()
         {
-            DateTime time = DateTime.Now; 
-            Client.PlantsVsZombiesStudio client = new(new (this));
+            DateTime time = DateTime.Now;
+            Client.PlantsVsZombiesStudio client = new(new(this));
             client.Logger.WriteLine("Constructing PVZSTUDIO...");
             InitializeComponent();
             InitializeAnimation();
+            if (LanguageManager.CurrentLanguage == null)
+            {
+                LanguageManager.CurrentLanguage = new(string.Empty, new());
+            }
             if (LanguageManager.CurrentLanguage.Dictionary.ContainsKey("#window_title"))
             {
                 Title = Query("#window_title");
@@ -46,14 +42,21 @@ namespace PlantsVsZombiesStudio
             client.Logger.WriteLine($"Constructing PVZSTUDIO ≤ {(int)(DateTime.Now - time).TotalMilliseconds}ms elapsed");
         }
 
-        private SoundPlayer audioButton;
-        private Client.PlantsVsZombiesStudio Instance => Client.PlantsVsZombiesStudio.Instance;
+        private readonly SoundPlayer audioButton = new(PlantsVsZombiesStudio.Resources.ButtonPressed);
+
+        private static Client.PlantsVsZombiesStudio Instance => Client.PlantsVsZombiesStudio.Instance;
         public static void InitializeLanguage()
         {
-            Settings.InitializateSettings();
-            LanguageManager.EnumLanguages();
-            LanguageManager.CurrentLanguage = LanguageManager.LoadedLanguages[Settings.Query<string>("language")];
-            NeedToReload = true;
+            try
+            {
+                Settings.InitializateSettings();
+                LanguageManager.EnumLanguages();
+                LanguageManager.CurrentLanguage = LanguageManager.LoadedLanguages[Settings.Query<string>("language")];
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         private void InitializeBorders()
@@ -72,33 +75,21 @@ namespace PlantsVsZombiesStudio
         private void ButtonModifyMoney_Click(object sender, RoutedEventArgs e)
         {
             int money;
+            string textMoney = TextBoxMoney.Text;
+            bool forceCast = CheckBoxForceCast.IsChecked.GetValueOrDefault();
             ProcessButtonAnimation(sender, delegate
               {
                   if (IsGameExist)
                   {
-                      if (int.TryParse(TextBoxMoney.Text, out money))
+                      if (int.TryParse(textMoney, out money))
                       {
                           PVZ.SaveData.Money = money;
                       }
-                      else if (CheckBoxForceCast.IsChecked.GetValueOrDefault())
+                      else if (forceCast)
                       {
-                          SyntaxTree syntaxTree = SyntaxTree.Parse(TextBoxMoney.Text);
-                          Binder binder = new();
-                          BoundExpression boundExpression = binder.BindExpression(syntaxTree.Root);
-                          string[] diagnostics = binder.Diagnostic.ToArray();
-                          StringBuilder builder = new();
-                          if (diagnostics.Any())
+                          try
                           {
-                              foreach (string diagnostic in diagnostics)
-                              {
-                                  _ = builder.AppendLine(diagnostic);
-                              }
-                              ShowNotice(Query("evaluator.error"), builder.ToString(), false, null);
-                          }
-                          else
-                          {
-                              Evaluator evaluator = new Evaluator(boundExpression);
-                              object result = evaluator.Evaluate();
+                              object result = Calculator.Evaluate(textMoney);
                               if (result is int money)
                               {
                                   PVZ.SaveData.Money = money;
@@ -108,10 +99,14 @@ namespace PlantsVsZombiesStudio
                                   ShowNotice(Query("error"), string.Format(Query("error.evaluator"), result));
                               }
                           }
+                          catch (Exception e)
+                          {
+                              ShowNotice(Query("evaluator.error"), e.Message, false, null);
+                          }
                       }
                       else
                       {
-                          ShowNotice(Query("error"), string.Format(Query("error.parse"), TextBoxMoney.Text), false, null);
+                          ShowNotice(Query("error"), string.Format(Query("error.parse"), textMoney), false, null);
                       }
                   }
                   else
@@ -122,7 +117,7 @@ namespace PlantsVsZombiesStudio
         }
 
         private const string LanguageNameKey = "#language_name";
-        private bool _forceClose;
+        internal bool _forceClose;
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (_forceClose)
@@ -145,7 +140,7 @@ namespace PlantsVsZombiesStudio
             e.Cancel = true;
         }
 
-        private void CloseWindow()
+        internal void CloseWindow()
         {
             try
             {
@@ -180,14 +175,18 @@ namespace PlantsVsZombiesStudio
         {
             ButtonFindGame.IsEnabled = false;
 
-            audioButton.Stop();
-            _ = Task.Factory.StartNew(audioButton.PlaySync);
-            ProcessButtonAnimationWithContent(ButtonFindGame, "SEARCHING FOR GAME PROCESS", delegate
+            _ = Task.Factory.StartNew(delegate
+            {
+                audioButton.PlaySync();
+            });
+            ProcessButtonAnimationWithContent(ButtonFindGame, Query("search_for_game_process"), delegate
             {
                 while (!PVZ.RunGame())
                 {
                     Thread.Sleep(500);
                 }
+
+                Client.PlantsVsZombiesStudio.Instance.GameFound();
 
                 PVZ.Game.EnableRaisingEvents = true;
                 PVZ.Game.Exited += delegate
@@ -198,21 +197,6 @@ namespace PlantsVsZombiesStudio
                     });
                 };
             });
-            //ProcessButtonAnimation(sender, delegate
-            //{
-            //    if (IsGameExist)
-            //    {
-            //        ShowNotice(Query("game.already_found.title"), Query("game.already_found.text"), false, null);
-            //    }
-            //    else if (PVZ.RunGame())
-            //    {
-            //        EnqueueMessage(Query("game.found"));
-            //    }
-            //    else
-            //    {
-            //        ShowNotice(Query("game.not_found"), Query("game.not_found.text"), false, null);
-            //    }
-            //});
         }
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
@@ -230,31 +214,21 @@ namespace PlantsVsZombiesStudio
                 }
                 else if (forceCast)
                 {
-                    Binder binder = new();
-                    string[] diagnostics = binder.Diagnostic.ToArray();
-                    StringBuilder builder = new();
-                    if (diagnostics.Any())
+                    try
                     {
-                        foreach (var diagnostic in diagnostics)
+                        object result = Calculator.Evaluate(text);
+                        if (result is int sun)
                         {
-                            builder.AppendLine(diagnostic);
-                        }
-
-                        ShowNotice(Query("evaluator.error"), builder.ToString(), false, null);
-                    }
-                    else
-                    {
-                        BoundExpression boundExpression = binder.BindExpression(SyntaxTree.Parse(text).Root);
-                        Evaluator evaluator = new(boundExpression);
-                        object result = evaluator.Evaluate();
-                        if (result is int money)
-                        {
-                            PVZ.Sun = money;
+                            PVZ.Sun = sun;
                         }
                         else
                         {
                             ShowNotice(Query("error"), string.Format(Query("error.evaluator"), result));
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        ShowNotice(Query("evaluator.error"), e.Message, false, null);
                     }
                 }
                 else
@@ -283,9 +257,7 @@ namespace PlantsVsZombiesStudio
             }
 
             CheckBoxForceCast.IsChecked = Settings.Query<bool>("evaluator");
-            ComboBoxLanguages.Text = LanguageManager.CurrentLanguage.Query(LanguageNameKey);
-
-            audioButton = new SoundPlayer(PlantsVsZombiesStudio.Resources.ButtonPressed);
+            ComboBoxLanguages.Text = LanguageManager.CurrentLanguage?.Query(LanguageNameKey);
             audioButton.Load();
         }
 
@@ -316,32 +288,19 @@ namespace PlantsVsZombiesStudio
             Instance.Logger.WriteLine(e.ToString());
         }
 
-        private void Button_Click_3(object sender, RoutedEventArgs e)
-        {
-            MainWindow window = new();
-            Application.Current.MainWindow = window;
-            window.Show();
-            _forceClose = true;
-            Close();
-            GC.Collect();
-        }
-
         private void ButtonCheckUpdate_Click(object sender, RoutedEventArgs e)
         {
-            ProcessButtonAnimation(sender, delegate
-            {
-                Ping ping = new();
-                if (ping.Send("gitee.com").Status != IPStatus.Success)
-                {
-                    ShowNotice(Query("network.connection.disconnect"), Query("network.connection.disconnect.text"));
-                    return;
-                }
-            });
+            Client.PlantsVsZombiesStudio.Instance.Update();
         }
 
-        private void ComboBoxLanguages_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void ComboBoxLanguages_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Client.PlantsVsZombiesStudio.ChangeLanguage(ComboBoxLanguages.Text);
+            string languageName = ComboBoxLanguages.SelectedItem.ToString();
+            if (LanguageManager.CurrentLanguage.Query(LanguageNameKey) != languageName)
+            {
+                Client.PlantsVsZombiesStudio.ChangeLanguage(languageName);
+                Instance.Reload();
+            }
         }
 
         private void Window_ContentRendered(object sender, EventArgs e)
@@ -349,9 +308,9 @@ namespace PlantsVsZombiesStudio
             InitializeBorders();
         }
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
-            audioButton.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

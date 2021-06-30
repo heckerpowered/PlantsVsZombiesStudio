@@ -4,6 +4,21 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <StartupObject>PlantsVsZombiesStudio.App</StartupObject>
+    <SignAssembly>False</SignAssembly>
+    <RootNamespace>$(MSBuildProjectName)</RootNamespace>
+    <ApplicationIcon>C:\Users\Claudette\source\repos\PlantsVsZombiesStudio\PlantsVsZombiesStudio\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>False</Optimize>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,8 +31,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MD5Tool\MD5Tool.csproj" />
+    <ProjectReference Include="..\PlantsVsZombiesStudioInstaller\PlantsVsZombiesStudioInstaller.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Jvav-Windows">
-      <HintPath>..\..\Jvav-Windows\bin\Release\net5.0\Jvav-Windows.dll</HintPath>
+      <HintPath>..\..\Jvav-Windows\bin\Release\net6.0\Jvav-Windows.dll</HintPath>
     </Reference>
     <Reference Include="MultiThreadDownloader">
       <HintPath>..\..\MultiThreadDownloader\bin\Release\net5.0\MultiThreadDownloader.dll</HintPath>

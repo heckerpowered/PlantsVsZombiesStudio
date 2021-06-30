@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Xml.Linq;
 
 namespace PlantsVsZombiesStudio.I18n
 {
     public static class LanguageManager
     {
         public static Dictionary<string, Language> LoadedLanguages => _languages;
-        private static Dictionary<string, Language> _languages = new();
+        private static readonly Dictionary<string, Language> _languages = new();
 
         public static Language CurrentLanguage { get; set; }
 
@@ -29,13 +28,13 @@ namespace PlantsVsZombiesStudio.I18n
         }
         public static Language GetLanguageByName(string name)
         {
-            foreach(var item in LoadedLanguages)  
+            foreach (var item in LoadedLanguages)
                 if (item.Value.Query("#language_name") == name)
                     return item.Value;
 
             throw new FileNotFoundException(name);
         }
-        public static Language  GetLanguageById(string id)
+        public static Language GetLanguageById(string id)
         {
             foreach (var item in LoadedLanguages)
                 if (item.Key == id)

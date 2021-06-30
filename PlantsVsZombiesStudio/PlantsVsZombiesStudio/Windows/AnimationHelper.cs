@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
@@ -7,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shell;
-
 namespace PlantsVsZombiesStudio
 {
     public partial class MainWindow : Window
@@ -74,7 +72,7 @@ namespace PlantsVsZombiesStudio
                 showStoryboard.Begin(CardNotice);
             });
         }
-        private ProgressBar AllocateCircularProgressBar(bool isIndeterminate = true)
+        internal ProgressBar AllocateCircularProgressBar(bool isIndeterminate = true)
         {
             return new ProgressBar
             {
@@ -134,7 +132,7 @@ namespace PlantsVsZombiesStudio
             }
         }
 
-        public void ProcessButtonAnimationWithContent(object sender,string content, Action work, bool Animation = true)
+        public void ProcessButtonAnimationWithContent(object sender, string content, Action work, bool Animation = true)
         {
             if (sender is Button button)
             {
@@ -151,7 +149,7 @@ namespace PlantsVsZombiesStudio
                     var board = new Storyboard();
                     var animation = new DoubleAnimation()
                     {
-                        To = Animation ? formattedText.Width : width,
+                        To = Animation ? formattedText.Width * 1.5 : width,
                         EasingFunction = new CubicEase
                         {
                             EasingMode = EasingMode.EaseOut
@@ -186,7 +184,7 @@ namespace PlantsVsZombiesStudio
                 }
             }
         }
-        private void CloseCurrentDialog()
+        internal void CloseCurrentDialog()
         {
             Dispatcher.Invoke(delegate
             {
@@ -209,7 +207,7 @@ namespace PlantsVsZombiesStudio
             }
         }
 
-        private void EnqueueMessage(string message)
+        public void EnqueueMessage(string message)
         {
             Dispatcher.Invoke(delegate
             {
