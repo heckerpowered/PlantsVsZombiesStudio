@@ -11,6 +11,7 @@ using System.Windows.Shell;
 using System.Windows.Controls;
 using System.Diagnostics;
 using System.Windows.Controls.Primitives;
+using System.IO.Compression;
 
 namespace PlantsVsZombiesStudio.Client
 {
@@ -92,20 +93,32 @@ namespace PlantsVsZombiesStudio.Client
 
                               MainWindow.TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
                               MainWindow.CloseCurrentDialog();
-                              MainWindow.ShowNotice(MainWindow.Query("update.install"), MainWindow.Query("update.install.restart"), true,delegate(bool c)
-                              {
-                                  if (c)
-                                  {
-                                      if (File.Exists("PlantsVsZombiesStudioInstaller.exe.update"))
-                                      {
-                                          File.Delete("PlantsVsZombiesStudioInstaller.exe");
-                                          File.Move("PlantsVsZombiesStudioInstaller.exe.update", "PlantsVsZombiesStudioInstaller.exe");
-                                      }
+                              MainWindow.ShowNotice(MainWindow.Query("update.install"), MainWindow.Query("update.install.restart"), true, delegate (bool c)
+                               {
+                                   if (c)
+                                   {
+                                       if (File.Exists("PlantsVsZombiesStudioInstaller.dll.update"))
+                                       {
+                                           if (File.Exists("PlantsVsZombiesStudioInstaller.dll"))
+                                           {
+                                               File.Delete("PlantsVsZombiesStudioInstaller.dll");
+                                           }
+                                           File.Move("PlantsVsZombiesStudioInstaller.dll.update", "PlantsVsZombiesStudioInstaller.dll");
+                                       }
 
-                                      _ = Process.Start("PlantsVsZombiesStudioInstaller.exe");
-                                      MainWindow.CloseWindow();
-                                  }
-                              });
+                                       if (File.Exists("PlantsVsZombiesStudioInstaller.exe.update"))
+                                       {
+                                           if (File.Exists("PlantsVsZombiesStudioInstaller.exe"))
+                                           {
+                                               File.Delete("PlantsVsZombiesStudioInstaller.exe");
+                                           }
+                                           File.Move("PlantsVsZombiesStudioInstaller.exe.update", "PlantsVsZombiesStudioInstaller.exe");
+                                       }
+
+                                       _ = Process.Start("PlantsVsZombiesStudioInstaller.exe");
+                                       MainWindow.CloseWindow();
+                                   }
+                               });
                           }
                       });
                 }
@@ -147,6 +160,53 @@ namespace PlantsVsZombiesStudio.Client
             //        }
             //    }
             //});
+        }
+
+        public async void DownloadCurrentVersion()
+        {
+            if (MainWindow._pvzVersion == null)
+            {
+                MainWindow.ShowNotice(MainWindow.Query("unable_to_download"), MainWindow.Query("select_item_first"));
+            }
+            else
+            {
+                MainWindow.EnqueueMessage(MainWindow.Query("download_started"));
+                if (!Directory.Exists("Download"))
+                {
+                    Directory.CreateDirectory("Download");
+                }
+
+                PVZVersion version = MainWindow._pvzVersion;
+                MultiThreadDownloadTask task = new(new($"https://plants-vs-zombies-studio-1256953837.cos.ap-chengdu.myqcloud.com/Storage/game/{version.FileName}", 32, $"Download/{version.FileName}"));
+                ProgressBar bar = MainWindow.AllocateCircularProgressBar();
+                MainWindow.ShowNotice(MainWindow.Query("downloading"), bar);
+                await Task.Factory.StartNew(task.Download);
+                double progress;
+                do
+                {
+                    progress = (double)task.DownloadedSize / task.ContentLength;
+                    MainWindow.TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Normal;
+                    MainWindow.TaskbarItemInfo.ProgressValue = progress;
+                    if(MainWindow.CardContent.Content == bar)
+                    {
+                        MainWindow.TextNoticeTitle.Text = $"{MainWindow.Query("downloading")}({progress*100:0.00}%)";
+                    }
+                    await Task.Delay(100);
+                } while (progress != 1 && !task.IsCompeleted);
+
+                MainWindow.TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+                MainWindow.CloseCurrentDialog();
+                string path = $"Download\\{version.FileName}";
+                await Task.Factory.StartNew(delegate
+                {
+                    ZipFile.ExtractToDirectory(path, "Download", true);
+                });
+
+                MainWindow.Dispatcher.Invoke(delegate
+                {
+                    MainWindow.ShowNotice(MainWindow.Query("download_compelete"), string.Format(MainWindow.Query("file_downloaded"), version.FileName));
+                });
+            }
         }
     }
 }

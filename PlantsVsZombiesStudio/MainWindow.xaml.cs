@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Text;
@@ -9,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Shell;
 
 using PlantsVsZombiesStudio.I18n;
@@ -181,7 +184,7 @@ namespace PlantsVsZombiesStudio
             });
             ProcessButtonAnimationWithContent(ButtonFindGame, Query("search_for_game_process"), delegate
             {
-                while (!PVZ.RunGame())
+                while (!RunGame())
                 {
                     Thread.Sleep(500);
                 }
@@ -198,6 +201,13 @@ namespace PlantsVsZombiesStudio
                 };
             });
         }
+
+        private static bool RunGame()
+        {
+            Process[] processes = Process.GetProcessesByName("popcapgame1");
+            return processes.Any() ? PVZ.RunGame(processes.First().Id) : PVZ.RunGame();
+        }
+
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
             string text = TextBoxSun.Text;
@@ -311,6 +321,88 @@ namespace PlantsVsZombiesStudio
         void IDisposable.Dispose()
         {
             GC.SuppressFinalize(this);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Escape)
+            {
+                CloseCurrentDialog();
+            }
+        }
+        private bool _pvzVersionsInitialized = false;
+        internal PVZVersion _pvzVersion;
+        private void ListBoxPVZVersions_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (!_pvzVersionsInitialized)
+            {
+                _pvzVersionsInitialized = true;
+                foreach (var item in AutoInstaller.GetPVZVersions())
+                {
+                    if (item.Type == PVZVersionType.Original)
+                    {
+                        ListBoxPVZVersionsOriginal.Items.Add(item);
+                    }
+                    else
+                    {
+                        ListBoxPVZVersionsModified.Items.Add(item);
+                    }
+                }
+            }
+        }
+
+        private void ListBoxPVZVersionsOriginal_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _pvzVersion = (PVZVersion)ListBoxPVZVersionsOriginal.SelectedItem;
+            ButtonLaunch.IsEnabled = File.Exists($@"Download\\{_pvzVersion.FileName.Replace(".zip", "")}\\PlantsVsZombies.exe");
+            ButtonDownload.IsEnabled = !ButtonLaunch.IsEnabled;
+        }
+
+        private void ButtonDownload_Click(object sender, RoutedEventArgs e)
+        {
+            Client.PlantsVsZombiesStudio.Instance.DownloadCurrentVersion();
+        }
+
+        private async void ButtonLaunch_Click(object sender, RoutedEventArgs e)
+        {
+            ProgressBar progressBar = AllocateCircularProgressBar();
+            progressBar.HorizontalAlignment = HorizontalAlignment.Center;
+            ShowNotice(Query("launching"), progressBar);
+            await Task.Factory.StartNew(async delegate
+            {
+                Dispatcher.Invoke(delegate
+                {
+                    ButtonFindGame.IsEnabled = false;
+                });
+                Process game = Process.Start(new ProcessStartInfo()
+                {
+                    FileName = $"Download\\{_pvzVersion.FileName.Replace(".zip", "")}\\PlantsVsZombies.exe",
+                    WorkingDirectory = $"Download\\{_pvzVersion.FileName.Replace(".zip", "")}\\"
+                });
+                game.WaitForInputIdle();
+                game.EnableRaisingEvents = true;
+                game.Exited += delegate
+                {
+                    Dispatcher.Invoke(delegate
+                    {
+                        ButtonFindGame.IsEnabled = true;
+                    });
+                };
+                await Task.Delay(500);
+                PVZ.RunGame(game.Id);
+            });
+
+            if(CardContent.Content == progressBar)
+            {
+                CloseCurrentDialog();
+            }
+        }
+
+        private void ListBoxPVZVersionsModified_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _pvzVersion = (PVZVersion)ListBoxPVZVersionsModified.SelectedItem;
+            ButtonLaunch.IsEnabled = File.Exists($@"Download\\{_pvzVersion.FileName.Replace(".zip", "")}\\PlantsVsZombies.exe");
+            ButtonDownload.IsEnabled = !ButtonLaunch.IsEnabled;
         }
     }
 }

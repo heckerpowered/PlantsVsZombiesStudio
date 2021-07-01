@@ -7,7 +7,7 @@
     <StartupObject>PlantsVsZombiesStudio.App</StartupObject>
     <SignAssembly>False</SignAssembly>
     <RootNamespace>$(MSBuildProjectName)</RootNamespace>
-    <ApplicationIcon>C:\Users\Claudette\source\repos\PlantsVsZombiesStudio\PlantsVsZombiesStudio\icon.ico</ApplicationIcon>
+    <ApplicationIcon></ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

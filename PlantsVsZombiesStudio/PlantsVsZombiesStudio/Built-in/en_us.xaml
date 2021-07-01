@@ -31,4 +31,11 @@
     <system:String x:Key="KillZombies">Kill zombies</system:String>
     <system:String x:Key="HypnoZombies">Hypno zombies</system:String>
     <system:String x:Key="CleanPlants">Clean plants</system:String>
+    <system:String x:Key="AutoInstall">AUTO-INSTALL</system:String>
+    <system:String x:Key="Original">ORIGINAL</system:String>
+    <system:String x:Key="Modified">MODIFIED</system:String>
+    <system:String x:Key="Download">DOWNLOAD</system:String>
+    <system:String x:Key="InstallPreview">INSTALL PREVIEW</system:String>
+    <system:String x:Key="Launch">LAUNCH</system:String>
+    <system:String x:Key="Game">GAME</system:String>
 </ResourceDictionary>
